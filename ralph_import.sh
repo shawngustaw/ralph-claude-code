@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Ralph Import - Convert PRDs to Ralph format using Claude Code
-# Version: 0.9.8 - Modern CLI support with JSON output parsing
+# Version: 0.9.9 - Modern CLI support with JSON output parsing and --in-place flag
 set -e
 
 # Configuration
@@ -13,6 +13,9 @@ CLAUDE_OUTPUT_FORMAT="json"
 # Use bash array for proper quoting of each tool argument
 declare -a CLAUDE_ALLOWED_TOOLS=('Read' 'Write' 'Bash(mkdir:*)' 'Bash(cp:*)')
 CLAUDE_MIN_VERSION="2.0.76"  # Minimum version for modern CLI features
+
+# CLI flags
+IN_PLACE=false
 
 # Temporary file names
 CONVERSION_OUTPUT_FILE=".ralph_conversion_output.json"
@@ -237,17 +240,27 @@ show_help() {
     cat << HELPEOF
 Ralph Import - Convert PRDs to Ralph Format
 
-Usage: $0 <source-file> [project-name]
+Usage: $0 [OPTIONS] <source-file> [project-name]
 
 Arguments:
     source-file     Path to your PRD/specification file (any format)
     project-name    Name for the new Ralph project (optional, defaults to filename)
 
+Options:
+    -h, --help      Show this help message
+    --in-place      Convert PRD in current directory (for existing projects)
+                    Does not create a new subdirectory
+
 Examples:
+    # Create new project and import PRD
     $0 my-app-prd.md
     $0 requirements.txt my-awesome-app
     $0 project-spec.json
     $0 design-doc.docx webapp
+
+    # Import PRD into existing project (current directory)
+    cd my-existing-project
+    $0 --in-place ../requirements.md
 
 Supported formats:
     - Markdown (.md)
@@ -258,20 +271,30 @@ Supported formats:
     - Any text-based format
 
 The command will:
-1. Create a new Ralph project
+1. Create a new Ralph project (or use current directory with --in-place)
 2. Use Claude Code to intelligently convert your PRD into:
    - PROMPT.md (Ralph instructions)
    - @fix_plan.md (prioritized tasks)
    - specs/ (technical specifications)
 
+For existing projects, consider using:
+    ralph-init --import <prd-file>
+
 HELPEOF
 }
 
 # Check dependencies
+# Arguments:
+#   $1 - "in_place" if running in-place mode (skips ralph-setup check)
 check_dependencies() {
-    if ! command -v ralph-setup &> /dev/null; then
-        log "ERROR" "Ralph not installed. Run ./install.sh first"
-        exit 1
+    local mode="${1:-standard}"
+    
+    # ralph-setup is only required for standard mode (new project creation)
+    if [[ "$mode" != "in_place" ]]; then
+        if ! command -v ralph-setup &> /dev/null; then
+            log "ERROR" "Ralph not installed. Run ./install.sh first"
+            exit 1
+        fi
     fi
     
     if ! npx @anthropic/claude-code --version &> /dev/null 2>&1; then
@@ -561,7 +584,7 @@ PROMPTEOF
     fi
 }
 
-# Main function
+# Main function for standard mode (creates new project directory)
 main() {
     local source_file="$1"
     local project_name="$2"
@@ -586,7 +609,7 @@ main() {
     log "INFO" "Converting PRD: $source_file"
     log "INFO" "Project name: $project_name"
     
-    check_dependencies
+    check_dependencies "standard"
     
     # Create project directory
     log "INFO" "Creating Ralph project: $project_name"
@@ -614,13 +637,100 @@ main() {
     echo "Project created in: $(pwd)"
 }
 
-# Handle command line arguments
-case "${1:-}" in
-    -h|--help|"")
+# Main function for in-place mode (converts PRD in current directory)
+main_in_place() {
+    local source_file="$1"
+    
+    # Validate arguments
+    if [[ -z "$source_file" ]]; then
+        log "ERROR" "Source file is required with --in-place"
+        echo "Usage: ralph-import --in-place <source-file>"
+        exit 1
+    fi
+    
+    if [[ ! -f "$source_file" ]]; then
+        log "ERROR" "Source file does not exist: $source_file"
+        exit 1
+    fi
+    
+    local project_name
+    project_name=$(basename "$(pwd)")
+    
+    log "INFO" "Converting PRD in-place: $source_file"
+    log "INFO" "Working directory: $(pwd)"
+    
+    check_dependencies "in_place"
+    
+    # Create Ralph directory structure if not exists
+    log "INFO" "Ensuring Ralph directory structure exists..."
+    mkdir -p specs/stdlib src examples logs docs/generated
+    
+    # Copy source file to current directory if not already here
+    local source_basename
+    source_basename=$(basename "$source_file")
+    local source_dir
+    source_dir=$(dirname "$source_file")
+    
+    if [[ "$source_dir" != "." && ! -f "$source_basename" ]]; then
+        cp "$source_file" "$source_basename"
+        log "INFO" "Copied PRD to current directory: $source_basename"
+    fi
+    
+    # Run conversion using local copy
+    convert_prd "$source_basename" "$project_name"
+    
+    log "SUCCESS" "🎉 PRD imported in-place successfully!"
+    echo ""
+    echo "Next steps:"
+    echo "  1. Review and edit the generated files:"
+    echo "     - PROMPT.md (Ralph instructions)"  
+    echo "     - @fix_plan.md (task priorities)"
+    echo "     - specs/requirements.md (technical specs)"
+    echo "  2. Start autonomous development:"
+    echo "     ralph --monitor"
+    echo ""
+    echo "Project directory: $(pwd)"
+}
+
+# Parse command line arguments
+parse_args() {
+    local positional_args=()
+    
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -h|--help)
+                show_help
+                exit 0
+                ;;
+            --in-place)
+                IN_PLACE=true
+                shift
+                ;;
+            -*)
+                log "ERROR" "Unknown option: $1"
+                echo "Use --help for usage information"
+                exit 1
+                ;;
+            *)
+                positional_args+=("$1")
+                shift
+                ;;
+        esac
+    done
+    
+    # Restore positional arguments
+    set -- "${positional_args[@]}"
+    
+    # Handle based on mode
+    if [[ "$IN_PLACE" == "true" ]]; then
+        main_in_place "${positional_args[@]}"
+    elif [[ ${#positional_args[@]} -eq 0 ]]; then
         show_help
         exit 0
-        ;;
-    *)
-        main "$@"
-        ;;
-esac
+    else
+        main "${positional_args[@]}"
+    fi
+}
+
+# Entry point
+parse_args "$@"

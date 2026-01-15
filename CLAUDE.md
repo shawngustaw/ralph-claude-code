@@ -70,6 +70,27 @@ ralph-setup my-project-name
 cd my-project-name
 ```
 
+### Setting Up an Existing Project
+```bash
+# Navigate to your existing project
+cd my-existing-project
+
+# Initialize Ralph in-place (doesn't create subdirectory)
+ralph-init
+
+# Initialize with force overwrite of existing files
+ralph-init --force
+
+# Initialize and convert a PRD in one command
+ralph-init --import requirements.md
+
+# Preview what would be created (dry run)
+ralph-init --dry-run
+
+# Alternative: Use ralph-import with --in-place flag
+ralph-import --in-place requirements.md
+```
+
 ### Running the Ralph Loop
 ```bash
 # Start with integrated tmux monitoring (recommended)
@@ -247,15 +268,16 @@ Templates in `templates/` provide starting points for new projects:
 ## Global Installation
 
 Ralph installs to:
-- **Commands**: `~/.local/bin/` (ralph, ralph-monitor, ralph-setup, ralph-import)
+- **Commands**: `~/.local/bin/` (ralph, ralph-monitor, ralph-setup, ralph-init, ralph-import)
 - **Templates**: `~/.ralph/templates/`
-- **Scripts**: `~/.ralph/` (ralph_loop.sh, ralph_monitor.sh, setup.sh, ralph_import.sh)
+- **Scripts**: `~/.ralph/` (ralph_loop.sh, ralph_monitor.sh, setup.sh, ralph_init.sh, ralph_import.sh)
 - **Libraries**: `~/.ralph/lib/` (circuit_breaker.sh, response_analyzer.sh, date_utils.sh)
 
 After installation, the following global commands are available:
 - `ralph` - Start the autonomous development loop
 - `ralph-monitor` - Launch the monitoring dashboard
-- `ralph-setup` - Create a new Ralph-managed project
+- `ralph-setup` - Create a new Ralph-managed project (new directory)
+- `ralph-init` - Initialize Ralph in an existing project (current directory)
 - `ralph-import` - Import PRD/specification documents to Ralph format
 
 ## Integration Points

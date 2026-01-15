@@ -134,12 +134,12 @@ Ralph has two phases: **one-time installation** and **per-project setup**.
 
 ```
 INSTALL ONCE              USE MANY TIMES
-+-----------------+          +----------------------+
-| ./install.sh    |    ->    | ralph-setup project1 |
-|                 |          | ralph-setup project2 |
-| Adds global     |          | ralph-setup project3 |
-| commands        |          | ...                  |
-+-----------------+          +----------------------+
++-----------------+          +---------------------------+
+| ./install.sh    |    ->    | ralph-setup project1      |  (new projects)
+|                 |          | ralph-init                |  (existing projects)
+| Adds global     |          | ralph-import specs.md     |
+| commands        |          | ...                       |
++-----------------+          +---------------------------+
 ```
 
 ### Phase 1: Install Ralph (One Time Only)
@@ -152,13 +152,13 @@ cd ralph-claude-code
 ./install.sh
 ```
 
-This adds `ralph`, `ralph-monitor`, and `ralph-setup` commands to your PATH.
+This adds `ralph`, `ralph-monitor`, `ralph-setup`, `ralph-init`, and `ralph-import` commands to your PATH.
 
 > **Note**: You only need to do this once per system. After installation, you can delete the cloned repository if desired.
 
-### Phase 2: Initialize New Projects (Per Project)
+### Phase 2A: Initialize New Projects (Per Project)
 
-For each new project you want Ralph to work on:
+For each **new project** you want Ralph to work on:
 
 #### Option A: Import Existing PRD/Specifications
 ```bash
@@ -189,6 +189,55 @@ cd my-awesome-project
 # Start autonomous development
 ralph --monitor
 ```
+
+### Phase 2B: Initialize Existing Projects
+
+For projects that **already exist**:
+
+#### Option A: Initialize Ralph in Current Directory
+```bash
+# Navigate to your existing project
+cd my-existing-project
+
+# Add Ralph files to existing project
+ralph-init
+
+# Edit the generated files:
+# - PROMPT.md with your project requirements
+# - @fix_plan.md with your task priorities
+# - Add specs to specs/ directory
+
+# Start autonomous development
+ralph --monitor
+```
+
+#### Option B: Initialize with Existing PRD/Specs
+```bash
+# Navigate to your existing project
+cd my-existing-project
+
+# Initialize Ralph and convert your PRD in one command
+ralph-init --import ../requirements.md
+
+# Or use ralph-import with --in-place flag
+ralph-import --in-place ../requirements.md
+
+# Start autonomous development
+ralph --monitor
+```
+
+#### Option C: Preview Changes (Dry Run)
+```bash
+# See what ralph-init would create without making changes
+ralph-init --dry-run
+```
+
+| Command | Creates New Directory | Use Case |
+|---------|----------------------|----------|
+| `ralph-setup` | Yes | Starting a brand new project |
+| `ralph-init` | No | Adding Ralph to an existing project |
+| `ralph-import` | Yes (default) | New project from PRD |
+| `ralph-import --in-place` | No | Add PRD to existing project |
 
 ### Ongoing Usage (After Setup)
 
@@ -650,8 +699,18 @@ ralph [OPTIONS]
 
 ### Project Commands (Per Project)
 ```bash
-ralph-setup project-name     # Create new Ralph project
-ralph-import prd.md project  # Convert PRD/specs to Ralph project
+# New project creation
+ralph-setup project-name          # Create new Ralph project directory
+ralph-import prd.md project       # Convert PRD/specs to new Ralph project
+
+# Existing project initialization
+ralph-init                        # Initialize Ralph in current directory
+ralph-init --force                # Initialize and overwrite existing files
+ralph-init --import specs.md      # Initialize and convert PRD in-place
+ralph-init --dry-run              # Preview what would be created
+ralph-import --in-place prd.md    # Convert PRD in current directory
+
+# Running Ralph
 ralph --monitor              # Start with integrated monitoring
 ralph --status               # Check current loop status
 ralph --verbose              # Enable detailed progress updates
@@ -684,6 +743,7 @@ Ralph is under active development with a clear path to v1.0.0. See [IMPLEMENTATI
 - 308 comprehensive tests (100% pass rate)
 - tmux integration and live monitoring
 - PRD import functionality with modern CLI JSON parsing
+- **Existing project integration** (`ralph-init` command)
 - Installation system and project templates
 - Modern CLI commands with JSON output support
 - CI/CD pipeline with GitHub Actions

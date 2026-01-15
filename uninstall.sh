@@ -43,7 +43,7 @@ check_installation() {
     local installed=false
 
     # Check for any of the Ralph commands
-    for cmd in ralph ralph-monitor ralph-setup ralph-import; do
+    for cmd in ralph ralph-monitor ralph-setup ralph-import ralph-init; do
         if [ -f "$INSTALL_DIR/$cmd" ]; then
             installed=true
             break
@@ -58,7 +58,7 @@ check_installation() {
     if [ "$installed" = false ]; then
         log "WARN" "Ralph does not appear to be installed"
         echo "Checked locations:"
-        echo "  - $INSTALL_DIR/{ralph,ralph-monitor,ralph-setup,ralph-import}"
+        echo "  - $INSTALL_DIR/{ralph,ralph-monitor,ralph-setup,ralph-import,ralph-init}"
         echo "  - $RALPH_HOME"
         exit 0
     fi
@@ -75,7 +75,7 @@ show_removal_plan() {
 
     # Commands
     echo "Commands in $INSTALL_DIR:"
-    for cmd in ralph ralph-monitor ralph-setup ralph-import; do
+    for cmd in ralph ralph-monitor ralph-setup ralph-import ralph-init; do
         if [ -f "$INSTALL_DIR/$cmd" ]; then
             echo "  - $cmd"
         fi
@@ -111,14 +111,14 @@ confirm_uninstall() {
 }
 
 # Remove Ralph commands from INSTALL_DIR
-# Removes: ralph, ralph-monitor, ralph-setup, ralph-import
+# Removes: ralph, ralph-monitor, ralph-setup, ralph-import, ralph-init
 # Uses: INSTALL_DIR environment variable
 # Output: Logs success with count of removed commands, or info if none found
 remove_commands() {
     log "INFO" "Removing Ralph commands..."
 
     local removed=0
-    for cmd in ralph ralph-monitor ralph-setup ralph-import; do
+    for cmd in ralph ralph-monitor ralph-setup ralph-import ralph-init; do
         if [ -f "$INSTALL_DIR/$cmd" ]; then
             rm -f "$INSTALL_DIR/$cmd"
             removed=$((removed + 1))
@@ -166,7 +166,7 @@ main() {
     echo ""
     log "SUCCESS" "Ralph for Claude Code has been uninstalled"
     echo ""
-    echo "Note: Project files created with ralph-setup are not removed."
+    echo "Note: Project files created with ralph-setup or ralph-init are not removed."
     echo "You can safely delete those project directories manually if needed."
     echo ""
 }
@@ -186,7 +186,7 @@ case "${1:-}" in
         echo "  - Ralph commands from $INSTALL_DIR"
         echo "  - Ralph home directory ($RALPH_HOME)"
         echo ""
-        echo "Project directories created with ralph-setup are NOT removed."
+        echo "Project directories created with ralph-setup or ralph-init are NOT removed."
         ;;
     *)
         main "$1"

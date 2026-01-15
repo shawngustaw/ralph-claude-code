@@ -132,19 +132,34 @@ RALPH_HOME="$HOME/.ralph"
 exec "$RALPH_HOME/ralph_import.sh" "$@"
 EOF
 
+    # Create ralph-init command (for existing projects)
+    cat > "$INSTALL_DIR/ralph-init" << 'EOF'
+#!/bin/bash
+# Ralph Project Init - Initialize in existing project
+
+RALPH_HOME="$HOME/.ralph"
+
+exec "$RALPH_HOME/ralph_init.sh" "$@"
+EOF
+
     # Copy actual script files to Ralph home with modifications for global operation
     cp "$SCRIPT_DIR/ralph_monitor.sh" "$RALPH_HOME/"
     
     # Copy PRD import script to Ralph home
     cp "$SCRIPT_DIR/ralph_import.sh" "$RALPH_HOME/"
     
+    # Copy init script to Ralph home (for existing project initialization)
+    cp "$SCRIPT_DIR/ralph_init.sh" "$RALPH_HOME/"
+    
     # Make all commands executable
     chmod +x "$INSTALL_DIR/ralph"
     chmod +x "$INSTALL_DIR/ralph-monitor" 
     chmod +x "$INSTALL_DIR/ralph-setup"
     chmod +x "$INSTALL_DIR/ralph-import"
+    chmod +x "$INSTALL_DIR/ralph-init"
     chmod +x "$RALPH_HOME/ralph_monitor.sh"
     chmod +x "$RALPH_HOME/ralph_import.sh"
+    chmod +x "$RALPH_HOME/ralph_init.sh"
     chmod +x "$RALPH_HOME/lib/"*.sh
 
     log "SUCCESS" "Ralph scripts installed to $INSTALL_DIR"
@@ -249,13 +264,20 @@ main() {
     echo "Global commands available:"
     echo "  ralph --monitor          # Start Ralph with integrated monitoring"
     echo "  ralph --help            # Show Ralph options"
-    echo "  ralph-setup my-project  # Create new Ralph project"
+    echo "  ralph-setup my-project  # Create new Ralph project (new directory)"
+    echo "  ralph-init              # Initialize Ralph in existing project"
     echo "  ralph-import prd.md     # Convert PRD to Ralph project"
     echo "  ralph-monitor           # Manual monitoring dashboard"
     echo ""
-    echo "Quick start:"
+    echo "Quick start (new project):"
     echo "  1. ralph-setup my-awesome-project"
     echo "  2. cd my-awesome-project"
+    echo "  3. # Edit PROMPT.md with your requirements"
+    echo "  4. ralph --monitor"
+    echo ""
+    echo "Quick start (existing project):"
+    echo "  1. cd my-existing-project"
+    echo "  2. ralph-init"
     echo "  3. # Edit PROMPT.md with your requirements"
     echo "  4. ralph --monitor"
     echo ""
@@ -272,7 +294,7 @@ case "${1:-install}" in
         ;;
     uninstall)
         log "INFO" "Uninstalling Ralph for Claude Code..."
-        rm -f "$INSTALL_DIR/ralph" "$INSTALL_DIR/ralph-monitor" "$INSTALL_DIR/ralph-setup" "$INSTALL_DIR/ralph-import"
+        rm -f "$INSTALL_DIR/ralph" "$INSTALL_DIR/ralph-monitor" "$INSTALL_DIR/ralph-setup" "$INSTALL_DIR/ralph-import" "$INSTALL_DIR/ralph-init"
         rm -rf "$RALPH_HOME"
         log "SUCCESS" "Ralph for Claude Code uninstalled"
         ;;
