@@ -92,36 +92,37 @@ teardown() {
 # Test: Basic Initialization
 # =============================================================================
 
-@test "ralph-init creates PROMPT.md in current directory" {
+@test "ralph-init creates PROMPT.md in .ralph directory" {
     run bash "$INIT_SCRIPT"
     
     assert_success
-    assert_file_exists "PROMPT.md"
+    assert_file_exists ".ralph/PROMPT.md"
 }
 
-@test "ralph-init creates @fix_plan.md in current directory" {
+@test "ralph-init creates @fix_plan.md in .ralph directory" {
     run bash "$INIT_SCRIPT"
     
     assert_success
-    assert_file_exists "@fix_plan.md"
+    assert_file_exists ".ralph/@fix_plan.md"
 }
 
-@test "ralph-init creates @AGENT.md in current directory" {
+@test "ralph-init creates @AGENT.md in .ralph directory" {
     run bash "$INIT_SCRIPT"
     
     assert_success
-    assert_file_exists "@AGENT.md"
+    assert_file_exists ".ralph/@AGENT.md"
 }
 
-@test "ralph-init does not create a subdirectory" {
+@test "ralph-init creates .ralph directory structure" {
     local original_dir="$(pwd)"
     
     run bash "$INIT_SCRIPT"
     
     assert_success
-    # PROMPT.md should be in current directory, not a subdirectory
-    assert_file_exists "PROMPT.md"
-    # No project subdirectory should be created
+    # Files should be in .ralph directory
+    assert_file_exists ".ralph/PROMPT.md"
+    assert_dir_exists ".ralph"
+    # Should stay in current directory
     [[ "$(pwd)" == "$original_dir" ]]
 }
 
@@ -129,46 +130,32 @@ teardown() {
 # Test: Directory Structure Creation
 # =============================================================================
 
-@test "ralph-init creates specs directory" {
+@test "ralph-init creates .ralph/specs directory" {
     run bash "$INIT_SCRIPT"
     
     assert_success
-    assert_dir_exists "specs"
+    assert_dir_exists ".ralph/specs"
 }
 
-@test "ralph-init creates specs/stdlib directory" {
+@test "ralph-init creates .ralph/specs/stdlib directory" {
     run bash "$INIT_SCRIPT"
     
     assert_success
-    assert_dir_exists "specs/stdlib"
+    assert_dir_exists ".ralph/specs/stdlib"
 }
 
-@test "ralph-init creates src directory" {
+@test "ralph-init creates .ralph/logs directory" {
     run bash "$INIT_SCRIPT"
     
     assert_success
-    assert_dir_exists "src"
+    assert_dir_exists ".ralph/logs"
 }
 
-@test "ralph-init creates examples directory" {
+@test "ralph-init creates .ralph/docs/generated directory" {
     run bash "$INIT_SCRIPT"
     
     assert_success
-    assert_dir_exists "examples"
-}
-
-@test "ralph-init creates logs directory" {
-    run bash "$INIT_SCRIPT"
-    
-    assert_success
-    assert_dir_exists "logs"
-}
-
-@test "ralph-init creates docs/generated directory" {
-    run bash "$INIT_SCRIPT"
-    
-    assert_success
-    assert_dir_exists "docs/generated"
+    assert_dir_exists ".ralph/docs/generated"
 }
 
 # =============================================================================
@@ -226,44 +213,48 @@ teardown() {
 # =============================================================================
 
 @test "ralph-init warns about existing PROMPT.md without --force" {
-    echo "# Existing prompt" > PROMPT.md
+    mkdir -p .ralph
+    echo "# Existing prompt" > .ralph/PROMPT.md
     
     run bash "$INIT_SCRIPT"
     
     assert_success
-    [[ "$output" == *"File already exists: PROMPT.md"* ]]
+    [[ "$output" == *"File already exists: .ralph/PROMPT.md"* ]]
     [[ "$output" == *"--force"* ]]
 }
 
 @test "ralph-init preserves existing PROMPT.md without --force" {
-    echo "# My custom prompt" > PROMPT.md
+    mkdir -p .ralph
+    echo "# My custom prompt" > .ralph/PROMPT.md
     
     run bash "$INIT_SCRIPT"
     
     assert_success
     # Content should be preserved
-    run cat PROMPT.md
+    run cat .ralph/PROMPT.md
     [[ "$output" == "# My custom prompt" ]]
 }
 
 @test "ralph-init with --force overwrites existing PROMPT.md" {
-    echo "# My custom prompt" > PROMPT.md
+    mkdir -p .ralph
+    echo "# My custom prompt" > .ralph/PROMPT.md
     
     run bash "$INIT_SCRIPT" --force
     
     assert_success
     # Content should be from template, not original
-    run cat PROMPT.md
+    run cat .ralph/PROMPT.md
     [[ "$output" == *"Ralph Development Instructions"* ]]
 }
 
 @test "ralph-init with --force overwrites existing @fix_plan.md" {
-    echo "# My custom fix plan" > "@fix_plan.md"
+    mkdir -p .ralph
+    echo "# My custom fix plan" > ".ralph/@fix_plan.md"
     
     run bash "$INIT_SCRIPT" --force
     
     assert_success
-    run cat "@fix_plan.md"
+    run cat ".ralph/@fix_plan.md"
     [[ "$output" == *"Ralph Fix Plan"* ]]
 }
 
@@ -275,17 +266,17 @@ teardown() {
     run bash "$INIT_SCRIPT" --dry-run
     
     assert_success
-    assert_file_not_exists "PROMPT.md"
-    assert_file_not_exists "@fix_plan.md"
-    assert_file_not_exists "@AGENT.md"
+    assert_file_not_exists ".ralph/PROMPT.md"
+    assert_file_not_exists ".ralph/@fix_plan.md"
+    assert_file_not_exists ".ralph/@AGENT.md"
 }
 
 @test "ralph-init --dry-run does not create directories" {
     run bash "$INIT_SCRIPT" --dry-run
     
     assert_success
-    [[ ! -d "specs" ]]
-    [[ ! -d "logs" ]]
+    [[ ! -d ".ralph/specs" ]]
+    [[ ! -d ".ralph/logs" ]]
 }
 
 @test "ralph-init --dry-run does not initialize git" {
@@ -314,35 +305,25 @@ teardown() {
 # =============================================================================
 
 @test "ralph-init does not overwrite existing specs directory" {
-    mkdir -p specs
-    echo "# Existing spec" > specs/existing.md
+    mkdir -p .ralph/specs
+    echo "# Existing spec" > .ralph/specs/existing.md
     
     run bash "$INIT_SCRIPT"
     
     assert_success
-    assert_file_exists "specs/existing.md"
-    run cat specs/existing.md
+    assert_file_exists ".ralph/specs/existing.md"
+    run cat .ralph/specs/existing.md
     [[ "$output" == "# Existing spec" ]]
 }
 
-@test "ralph-init does not overwrite existing src directory contents" {
-    mkdir -p src
-    echo "console.log('hello');" > src/index.js
-    
-    run bash "$INIT_SCRIPT"
-    
-    assert_success
-    assert_file_exists "src/index.js"
-}
-
 @test "ralph-init does not overwrite existing logs directory contents" {
-    mkdir -p logs
-    echo "Previous log entry" > logs/previous.log
+    mkdir -p .ralph/logs
+    echo "Previous log entry" > .ralph/logs/previous.log
     
     run bash "$INIT_SCRIPT"
     
     assert_success
-    assert_file_exists "logs/previous.log"
+    assert_file_exists ".ralph/logs/previous.log"
 }
 
 # =============================================================================
@@ -437,8 +418,8 @@ teardown() {
     run bash "$INIT_SCRIPT" --import requirements.md 2>&1 || true
     
     # Even if import fails (no Claude), directories should be created
-    assert_dir_exists "specs"
-    assert_dir_exists "logs"
+    assert_dir_exists ".ralph/specs"
+    assert_dir_exists ".ralph/logs"
 }
 
 @test "ralph-init -i is shorthand for --import" {
@@ -488,7 +469,7 @@ teardown() {
     run bash "$INIT_SCRIPT"
     
     assert_success
-    run cat PROMPT.md
+    run cat .ralph/PROMPT.md
     [[ "$output" == *"Ralph Development Instructions"* ]]
 }
 
@@ -496,7 +477,7 @@ teardown() {
     run bash "$INIT_SCRIPT"
     
     assert_success
-    run cat "@fix_plan.md"
+    run cat ".ralph/@fix_plan.md"
     [[ "$output" == *"Ralph Fix Plan"* ]]
 }
 
@@ -504,7 +485,7 @@ teardown() {
     run bash "$INIT_SCRIPT"
     
     assert_success
-    run cat "@AGENT.md"
+    run cat ".ralph/@AGENT.md"
     [[ "$output" == *"Agent Build Instructions"* ]]
 }
 
@@ -513,34 +494,37 @@ teardown() {
 # =============================================================================
 
 @test "ralph-init --force --dry-run shows force actions without applying" {
-    echo "# Existing" > PROMPT.md
+    mkdir -p .ralph
+    echo "# Existing" > .ralph/PROMPT.md
     
     run bash "$INIT_SCRIPT" --force --dry-run
     
     assert_success
     # File should still have original content
-    run cat PROMPT.md
+    run cat .ralph/PROMPT.md
     [[ "$output" == "# Existing" ]]
 }
 
 @test "ralph-init --no-git --force works together" {
-    echo "# Existing" > PROMPT.md
+    mkdir -p .ralph
+    echo "# Existing" > .ralph/PROMPT.md
     
     run bash "$INIT_SCRIPT" --no-git --force
     
     assert_success
     [[ ! -d ".git" ]]
-    run cat PROMPT.md
+    run cat .ralph/PROMPT.md
     [[ "$output" == *"Ralph Development Instructions"* ]]
 }
 
 @test "ralph-init -f is shorthand for --force" {
-    echo "# Existing" > PROMPT.md
+    mkdir -p .ralph
+    echo "# Existing" > .ralph/PROMPT.md
     
     run bash "$INIT_SCRIPT" -f
     
     assert_success
-    run cat PROMPT.md
+    run cat .ralph/PROMPT.md
     [[ "$output" == *"Ralph Development Instructions"* ]]
 }
 
@@ -555,7 +539,7 @@ teardown() {
     run bash "$INIT_SCRIPT"
     
     assert_success
-    assert_file_exists "PROMPT.md"
+    assert_file_exists ".ralph/PROMPT.md"
 }
 
 @test "ralph-init works with spaces in directory name" {
@@ -565,7 +549,7 @@ teardown() {
     run bash "$INIT_SCRIPT"
     
     assert_success
-    assert_file_exists "PROMPT.md"
+    assert_file_exists ".ralph/PROMPT.md"
 }
 
 @test "ralph-init works in directory with existing files" {
@@ -577,7 +561,7 @@ teardown() {
     run bash "$INIT_SCRIPT"
     
     assert_success
-    assert_file_exists "PROMPT.md"
+    assert_file_exists ".ralph/PROMPT.md"
     assert_file_exists "package.json"
     assert_file_exists "index.js"
 }

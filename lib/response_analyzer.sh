@@ -198,7 +198,7 @@ parse_json_response() {
 analyze_response() {
     local output_file=$1
     local loop_number=$2
-    local analysis_result_file=${3:-".response_analysis"}
+    local analysis_result_file=${3:-".ralph/.response_analysis"}
 
     # Initialize analysis result
     local has_completion_signal=false
@@ -394,8 +394,8 @@ analyze_response() {
     fi
 
     # 7. Analyze output length trends (detect declining engagement)
-    if [[ -f ".last_output_length" ]]; then
-        local last_length=$(cat ".last_output_length")
+    if [[ -f ".ralph/.last_output_length" ]]; then
+        local last_length=$(cat ".ralph/.last_output_length")
         local length_ratio=$((output_length * 100 / last_length))
 
         if [[ $length_ratio -lt 50 ]]; then
@@ -403,7 +403,7 @@ analyze_response() {
             ((confidence_score+=10))
         fi
     fi
-    echo "$output_length" > ".last_output_length"
+    echo "$output_length" > ".ralph/.last_output_length"
 
     # 8. Extract work summary from output
     if [[ -z "$work_summary" ]]; then
@@ -463,8 +463,8 @@ analyze_response() {
 
 # Update exit signals file based on analysis
 update_exit_signals() {
-    local analysis_file=${1:-".response_analysis"}
-    local exit_signals_file=${2:-".exit_signals"}
+    local analysis_file=${1:-".ralph/.response_analysis"}
+    local exit_signals_file=${2:-".ralph/.exit_signals"}
 
     if [[ ! -f "$analysis_file" ]]; then
         echo "ERROR: Analysis file not found: $analysis_file"
@@ -514,7 +514,7 @@ update_exit_signals() {
 
 # Log analysis results in human-readable format
 log_analysis_summary() {
-    local analysis_file=${1:-".response_analysis"}
+    local analysis_file=${1:-".ralph/.response_analysis"}
 
     if [[ ! -f "$analysis_file" ]]; then
         return 1
@@ -541,7 +541,7 @@ log_analysis_summary() {
 # Detect if Claude is stuck (repeating same errors)
 detect_stuck_loop() {
     local current_output=$1
-    local history_dir=${2:-"logs"}
+    local history_dir=${2:-".ralph/logs"}
 
     # Get last 3 output files
     local recent_outputs=$(ls -t "$history_dir"/claude_output_*.log 2>/dev/null | head -3)
@@ -592,7 +592,7 @@ detect_stuck_loop() {
 # =============================================================================
 
 # Session file location - standardized across ralph_loop.sh and response_analyzer.sh
-SESSION_FILE=".claude_session_id"
+SESSION_FILE=".ralph/.claude_session_id"
 # Session expiration time in seconds (24 hours)
 SESSION_EXPIRATION_SECONDS=86400
 

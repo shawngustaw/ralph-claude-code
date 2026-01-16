@@ -190,10 +190,12 @@ install_setup() {
 #!/bin/bash
 
 # Ralph Project Setup Script - Global Version
+# Creates a new project with Ralph files in .ralph/ subdirectory
 set -e
 
 PROJECT_NAME=${1:-"my-project"}
 RALPH_HOME="$HOME/.ralph"
+RALPH_PROJECT_DIR=".ralph"
 
 echo "🚀 Setting up Ralph project: $PROJECT_NAME"
 
@@ -201,14 +203,14 @@ echo "🚀 Setting up Ralph project: $PROJECT_NAME"
 mkdir -p "$PROJECT_NAME"
 cd "$PROJECT_NAME"
 
-# Create structure
-mkdir -p {specs/stdlib,src,examples,logs,docs/generated}
+# Create .ralph structure (all Ralph files go here)
+mkdir -p "$RALPH_PROJECT_DIR"/{specs/stdlib,logs,docs/generated}
 
-# Copy templates from Ralph home
-cp "$RALPH_HOME/templates/PROMPT.md" .
-cp "$RALPH_HOME/templates/fix_plan.md" @fix_plan.md
-cp "$RALPH_HOME/templates/AGENT.md" @AGENT.md
-cp -r "$RALPH_HOME/templates/specs/"* specs/ 2>/dev/null || true
+# Copy templates from Ralph home to .ralph/
+cp "$RALPH_HOME/templates/PROMPT.md" "$RALPH_PROJECT_DIR/"
+cp "$RALPH_HOME/templates/fix_plan.md" "$RALPH_PROJECT_DIR/@fix_plan.md"
+cp "$RALPH_HOME/templates/AGENT.md" "$RALPH_PROJECT_DIR/@AGENT.md"
+cp -r "$RALPH_HOME/templates/specs/"* "$RALPH_PROJECT_DIR/specs/" 2>/dev/null || true
 
 # Initialize git
 git init
@@ -218,10 +220,12 @@ git commit -m "Initial Ralph project setup"
 
 echo "✅ Project $PROJECT_NAME created!"
 echo "Next steps:"
-echo "  1. Edit PROMPT.md with your project requirements"
-echo "  2. Update specs/ with your project specifications"  
+echo "  1. Edit $RALPH_PROJECT_DIR/PROMPT.md with your project requirements"
+echo "  2. Update $RALPH_PROJECT_DIR/specs/ with your project specifications"  
 echo "  3. Run: ralph --monitor"
 echo "  4. Monitor: ralph-monitor (if running manually)"
+echo ""
+echo "Ralph files are in: $(pwd)/$RALPH_PROJECT_DIR/"
 EOF
 
     chmod +x "$RALPH_HOME/setup.sh"

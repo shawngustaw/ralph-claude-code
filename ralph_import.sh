@@ -1,11 +1,12 @@
 #!/bin/bash
 
 # Ralph Import - Convert PRDs to Ralph format using Claude Code
-# Version: 0.9.9 - Modern CLI support with JSON output parsing and --in-place flag
+# Version: 1.0.0 - Modern CLI support with JSON output parsing and .ralph directory
 set -e
 
 # Configuration
 CLAUDE_CODE_CMD="claude"
+RALPH_PROJECT_DIR=".ralph"  # All Ralph files go in this subdirectory
 
 # Modern CLI Configuration (Phase 1.1)
 # These flags enable structured JSON output and controlled file operations
@@ -335,9 +336,9 @@ Analyze the provided specification file and extract:
 
 ## Required Outputs
 
-Create these files in the current directory:
+Create these files in the .ralph/ directory:
 
-### 1. PROMPT.md
+### 1. .ralph/PROMPT.md
 Transform the PRD into Ralph development instructions:
 ```markdown
 # Ralph Development Instructions
@@ -376,7 +377,7 @@ You are Ralph, an autonomous AI development agent working on a [PROJECT NAME] pr
 Follow @fix_plan.md and choose the most important item to implement next.
 ```
 
-### 2. @fix_plan.md
+### 2. .ralph/@fix_plan.md
 Convert requirements into a prioritized task list:
 ```markdown
 # Ralph Fix Plan
@@ -397,7 +398,7 @@ Convert requirements into a prioritized task list:
 [Any important context from the original PRD]
 ```
 
-### 3. specs/requirements.md
+### 3. .ralph/specs/requirements.md
 Create detailed technical specifications:
 ```markdown
 # Technical Specifications
@@ -528,7 +529,7 @@ PROMPTEOF
     # Use PARSED_FILES_CREATED from JSON if available, otherwise check filesystem
     local missing_files=()
     local created_files=()
-    local expected_files=("PROMPT.md" "@fix_plan.md" "specs/requirements.md")
+    local expected_files=("$RALPH_PROJECT_DIR/PROMPT.md" "$RALPH_PROJECT_DIR/@fix_plan.md" "$RALPH_PROJECT_DIR/specs/requirements.md")
 
     # If JSON provided files_created, use that to inform verification
     if [[ "$json_parsed" == "true" && -n "$PARSED_FILES_CREATED" && "$PARSED_FILES_CREATED" != "[]" ]]; then
@@ -628,13 +629,14 @@ main() {
     echo ""
     echo "Next steps:"
     echo "  1. Review and edit the generated files:"
-    echo "     - PROMPT.md (Ralph instructions)"  
-    echo "     - @fix_plan.md (task priorities)"
-    echo "     - specs/requirements.md (technical specs)"
+    echo "     - $RALPH_PROJECT_DIR/PROMPT.md (Ralph instructions)"  
+    echo "     - $RALPH_PROJECT_DIR/@fix_plan.md (task priorities)"
+    echo "     - $RALPH_PROJECT_DIR/specs/requirements.md (technical specs)"
     echo "  2. Start autonomous development:"
     echo "     ralph --monitor"
     echo ""
     echo "Project created in: $(pwd)"
+    echo "Ralph files in: $(pwd)/$RALPH_PROJECT_DIR/"
 }
 
 # Main function for in-place mode (converts PRD in current directory)
@@ -662,8 +664,8 @@ main_in_place() {
     check_dependencies "in_place"
     
     # Create Ralph directory structure if not exists
-    log "INFO" "Ensuring Ralph directory structure exists..."
-    mkdir -p specs/stdlib src examples logs docs/generated
+    log "INFO" "Ensuring Ralph directory structure exists in $RALPH_PROJECT_DIR/..."
+    mkdir -p "$RALPH_PROJECT_DIR/specs/stdlib" "$RALPH_PROJECT_DIR/logs" "$RALPH_PROJECT_DIR/docs/generated"
     
     # Copy source file to current directory if not already here
     local source_basename
@@ -683,13 +685,14 @@ main_in_place() {
     echo ""
     echo "Next steps:"
     echo "  1. Review and edit the generated files:"
-    echo "     - PROMPT.md (Ralph instructions)"  
-    echo "     - @fix_plan.md (task priorities)"
-    echo "     - specs/requirements.md (technical specs)"
+    echo "     - $RALPH_PROJECT_DIR/PROMPT.md (Ralph instructions)"  
+    echo "     - $RALPH_PROJECT_DIR/@fix_plan.md (task priorities)"
+    echo "     - $RALPH_PROJECT_DIR/specs/requirements.md (technical specs)"
     echo "  2. Start autonomous development:"
     echo "     ralph --monitor"
     echo ""
     echo "Project directory: $(pwd)"
+    echo "Ralph files in: $(pwd)/$RALPH_PROJECT_DIR/"
 }
 
 # Parse command line arguments

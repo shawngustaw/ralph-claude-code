@@ -268,7 +268,7 @@ curl -sL https://raw.githubusercontent.com/frankbria/ralph-claude-code/main/unin
 
 Ralph operates on a simple but powerful cycle:
 
-1. **Read Instructions** - Loads `PROMPT.md` with your project requirements
+1. **Read Instructions** - Loads `.ralph/PROMPT.md` with your project requirements
 2. **Execute Claude Code** - Runs Claude Code with current context and priorities
 3. **Track Progress** - Updates task lists and logs execution results
 4. **Evaluate Completion** - Checks for exit conditions and project completion signals
@@ -296,7 +296,7 @@ Loop 8: Claude outputs "All tasks complete, project ready"
 ```
 
 **Other exit conditions:**
-- All tasks in `@fix_plan.md` marked complete
+- All tasks in `.ralph/@fix_plan.md` marked complete
 - Multiple consecutive "done" signals from Claude Code
 - Too many test-focused loops (indicating feature completeness)
 - Claude API 5-hour usage limit reached (with user prompt to wait or exit)
@@ -331,12 +331,12 @@ ralph-import design-doc.pdf
 
 ### What Gets Generated
 
-Ralph-import creates a complete project with:
+Ralph-import creates a complete project with all files in `.ralph/`:
 
-- **PROMPT.md** - Converted into Ralph development instructions
-- **@fix_plan.md** - Requirements broken down into prioritized tasks
-- **specs/requirements.md** - Technical specifications extracted from your document
-- **Standard Ralph structure** - All necessary directories and template files
+- **.ralph/PROMPT.md** - Converted into Ralph development instructions
+- **.ralph/@fix_plan.md** - Requirements broken down into prioritized tasks
+- **.ralph/specs/requirements.md** - Technical specifications extracted from your document
+- **Standard Ralph structure** - All necessary directories and template files in `.ralph/`
 
 The conversion is intelligent and preserves your original requirements while making them actionable for autonomous development.
 
@@ -475,41 +475,45 @@ CB_OUTPUT_DECLINE_THRESHOLD=70   # Open circuit if output declines by >70%
 
 ## Project Structure
 
-Ralph creates a standardized structure for each project:
+Ralph creates a standardized structure for each project, keeping all Ralph files in a `.ralph/` subdirectory:
 
 ```
 my-project/
-├── PROMPT.md           # Main development instructions for Ralph
-├── @fix_plan.md        # Prioritized task list (@ prefix = Ralph control file)
-├── @AGENT.md           # Build and run instructions
-├── specs/              # Project specifications and requirements
-│   └── stdlib/         # Standard library specifications
-├── src/                # Source code implementation
-├── examples/           # Usage examples and test cases
-├── logs/               # Ralph execution logs
-└── docs/generated/     # Auto-generated documentation
+├── .ralph/                 # All Ralph-specific files
+│   ├── PROMPT.md           # Main development instructions for Ralph
+│   ├── @fix_plan.md        # Prioritized task list
+│   ├── @AGENT.md           # Build and run instructions
+│   ├── specs/              # Project specifications and requirements
+│   │   └── stdlib/         # Standard library specifications
+│   ├── logs/               # Ralph execution logs
+│   └── docs/generated/     # Auto-generated documentation
+├── src/                    # Your source code (untouched by Ralph setup)
+├── tests/                  # Your tests (untouched by Ralph setup)
+└── ...                     # Your existing project files
 ```
+
+This structure keeps Ralph's configuration separate from your project files.
 
 ## Best Practices
 
 ### Writing Effective Prompts
 
 1. **Be Specific** - Clear requirements lead to better results
-2. **Prioritize** - Use `@fix_plan.md` to guide Ralph's focus
+2. **Prioritize** - Use `.ralph/@fix_plan.md` to guide Ralph's focus
 3. **Set Boundaries** - Define what's in/out of scope
 4. **Include Examples** - Show expected inputs/outputs
 
 ### Project Specifications
 
-- Place detailed requirements in `specs/`
-- Use `@fix_plan.md` for prioritized task tracking
+- Place detailed requirements in `.ralph/specs/`
+- Use `.ralph/@fix_plan.md` for prioritized task tracking
 - Keep `@AGENT.md` updated with build instructions
 - Document key decisions and architecture
 
 ### Monitoring Progress
 
 - Use `ralph-monitor` for live status updates
-- Check logs in `logs/` for detailed execution history
+- Check logs in `.ralph/logs/` for detailed execution history
 - Monitor `status.json` for programmatic access
 - Watch for exit condition signals
 
@@ -604,14 +608,14 @@ Shows real-time:
 ralph --status
 
 # Manual log inspection
-tail -f logs/ralph.log
+tail -f .ralph/logs/ralph.log
 ```
 
 ### Common Issues
 
 - **Rate Limits** - Ralph automatically waits and displays countdown
 - **5-Hour API Limit** - Ralph detects and prompts for user action (wait or exit)
-- **Stuck Loops** - Check `@fix_plan.md` for unclear or conflicting tasks
+- **Stuck Loops** - Check `.ralph/@fix_plan.md` for unclear or conflicting tasks
 - **Early Exit** - Review exit thresholds if Ralph stops too soon
 - **Premature Exit** - Check if Claude is setting `EXIT_SIGNAL: false` (Ralph now respects this)
 - **Execution Timeouts** - Increase `--timeout` value for complex operations
@@ -684,7 +688,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ralph [OPTIONS]
   -h, --help              Show help message
   -c, --calls NUM         Set max calls per hour (default: 100)
-  -p, --prompt FILE       Set prompt file (default: PROMPT.md)
+  -p, --prompt FILE       Set prompt file (default: .ralph/PROMPT.md)
   -s, --status            Show current status and exit
   -m, --monitor           Start with tmux session and live monitor
   -v, --verbose           Show detailed progress updates during execution

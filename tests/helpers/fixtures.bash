@@ -114,7 +114,7 @@ EOF
 
 # Sample PROMPT.md
 create_sample_prompt() {
-    local file=${1:-"PROMPT.md"}
+    local file=${1:-".ralph/PROMPT.md"}
     cat > "$file" << 'EOF'
 # Ralph Development Instructions
 
@@ -122,19 +122,19 @@ create_sample_prompt() {
 You are Ralph, an autonomous AI development agent working on a Task Management App project.
 
 ## Current Objectives
-1. Study specs/* to learn about the project specifications
-2. Review @fix_plan.md for current priorities
+1. Study .ralph/specs/* to learn about the project specifications
+2. Review .ralph/@fix_plan.md for current priorities
 3. Implement the highest priority item using best practices
 4. Use parallel subagents for complex tasks (max 100 concurrent)
 5. Run tests after each implementation
-6. Update documentation and fix_plan.md
+6. Update documentation and .ralph/@fix_plan.md
 
 ## Key Principles
 - ONE task per loop - focus on the most important thing
 - Search the codebase before assuming something isn't implemented
 - Use subagents for expensive operations (file searching, analysis)
 - Write comprehensive tests with clear documentation
-- Update @fix_plan.md with your learnings
+- Update .ralph/@fix_plan.md with your learnings
 - Commit working changes with descriptive messages
 
 ## 🧪 Testing Guidelines (CRITICAL)
@@ -145,13 +145,13 @@ You are Ralph, an autonomous AI development agent working on a Task Management A
 - Focus on CORE functionality first, comprehensive testing later
 
 ## Current Task
-Follow @fix_plan.md and choose the most important item to implement next.
+Follow .ralph/@fix_plan.md and choose the most important item to implement next.
 EOF
 }
 
 # Sample @fix_plan.md
 create_sample_fix_plan() {
-    local file=${1:-"@fix_plan.md"}
+    local file=${1:-".ralph/@fix_plan.md"}
     local total=${2:-10}
     local completed=${3:-3}
 
@@ -205,7 +205,7 @@ EOF
 
 # Sample @AGENT.md
 create_sample_agent_md() {
-    local file=${1:-"@AGENT.md"}
+    local file=${1:-".ralph/@AGENT.md"}
     cat > "$file" << 'EOF'
 # Agent Build Instructions
 
@@ -260,7 +260,7 @@ Created the following files:
 Running tests...
 ✓ All tests passed (5/5)
 
-Updating @fix_plan.md...
+Updating .ralph/@fix_plan.md...
 Completed: Set up basic project structure
 
 Ready for next task.
@@ -356,17 +356,17 @@ EOF
 create_test_project() {
     local project_dir=${1:-"test_project"}
 
-    mkdir -p "$project_dir"/{specs/stdlib,src,examples,logs,docs/generated}
+    mkdir -p "$project_dir/.ralph"/{specs/stdlib,logs,docs/generated}
 
     cd "$project_dir" || return 1
 
-    create_sample_prompt "PROMPT.md"
-    create_sample_fix_plan "@fix_plan.md" 10 3
-    create_sample_agent_md "@AGENT.md"
+    create_sample_prompt ".ralph/PROMPT.md"
+    create_sample_fix_plan ".ralph/@fix_plan.md" 10 3
+    create_sample_agent_md ".ralph/@AGENT.md"
 
-    echo "0" > .call_count
-    echo "$(date +%Y%m%d%H)" > .last_reset
-    echo '{"test_only_loops": [], "done_signals": [], "completion_indicators": []}' > .exit_signals
+    echo "0" > .ralph/.call_count
+    echo "$(date +%Y%m%d%H)" > .ralph/.last_reset
+    echo '{"test_only_loops": [], "done_signals": [], "completion_indicators": []}' > .ralph/.exit_signals
 
     cd - > /dev/null || return 1
 }

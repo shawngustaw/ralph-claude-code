@@ -109,17 +109,16 @@ teardown() {
 # Test: Subdirectory Structure
 # =============================================================================
 
-@test "setup.sh creates all required subdirectories" {
+@test "setup.sh creates all required subdirectories in .ralph" {
     run bash "$SETUP_SCRIPT" test-project
 
     assert_success
-    assert_dir_exists "test-project/specs"
-    assert_dir_exists "test-project/specs/stdlib"
-    assert_dir_exists "test-project/src"
-    assert_dir_exists "test-project/examples"
-    assert_dir_exists "test-project/logs"
-    assert_dir_exists "test-project/docs"
-    assert_dir_exists "test-project/docs/generated"
+    assert_dir_exists "test-project/.ralph"
+    assert_dir_exists "test-project/.ralph/specs"
+    assert_dir_exists "test-project/.ralph/specs/stdlib"
+    assert_dir_exists "test-project/.ralph/logs"
+    assert_dir_exists "test-project/.ralph/docs"
+    assert_dir_exists "test-project/.ralph/docs/generated"
 }
 
 @test "setup.sh creates nested docs/generated directory" {
@@ -127,48 +126,48 @@ teardown() {
 
     assert_success
     # Verify the nested structure exists
-    [[ -d "test-project/docs/generated" ]]
+    [[ -d "test-project/.ralph/docs/generated" ]]
 }
 
 @test "setup.sh creates nested specs/stdlib directory" {
     run bash "$SETUP_SCRIPT" test-project
 
     assert_success
-    [[ -d "test-project/specs/stdlib" ]]
+    [[ -d "test-project/.ralph/specs/stdlib" ]]
 }
 
 # =============================================================================
 # Test: Template Copying
 # =============================================================================
 
-@test "setup.sh copies PROMPT.md template" {
+@test "setup.sh copies PROMPT.md template to .ralph" {
     run bash "$SETUP_SCRIPT" test-project
 
     assert_success
-    assert_file_exists "test-project/PROMPT.md"
+    assert_file_exists "test-project/.ralph/PROMPT.md"
 
     # Verify content matches source
-    diff templates/PROMPT.md test-project/PROMPT.md
+    diff templates/PROMPT.md test-project/.ralph/PROMPT.md
 }
 
-@test "setup.sh copies fix_plan.md as @fix_plan.md" {
+@test "setup.sh copies fix_plan.md as @fix_plan.md in .ralph" {
     run bash "$SETUP_SCRIPT" test-project
 
     assert_success
-    assert_file_exists "test-project/@fix_plan.md"
+    assert_file_exists "test-project/.ralph/@fix_plan.md"
 
     # Verify content matches source
-    diff templates/fix_plan.md "test-project/@fix_plan.md"
+    diff templates/fix_plan.md "test-project/.ralph/@fix_plan.md"
 }
 
-@test "setup.sh copies AGENT.md as @AGENT.md" {
+@test "setup.sh copies AGENT.md as @AGENT.md in .ralph" {
     run bash "$SETUP_SCRIPT" test-project
 
     assert_success
-    assert_file_exists "test-project/@AGENT.md"
+    assert_file_exists "test-project/.ralph/@AGENT.md"
 
     # Verify content matches source
-    diff templates/AGENT.md "test-project/@AGENT.md"
+    diff templates/AGENT.md "test-project/.ralph/@AGENT.md"
 }
 
 @test "setup.sh copies specs templates if they exist" {
@@ -176,7 +175,7 @@ teardown() {
 
     assert_success
     # Verify spec file was copied
-    assert_file_exists "test-project/specs/sample_spec.md"
+    assert_file_exists "test-project/.ralph/specs/sample_spec.md"
 }
 
 @test "setup.sh handles empty specs directory gracefully" {
@@ -187,7 +186,7 @@ teardown() {
 
     # Should not fail (|| true in script handles this)
     assert_success
-    assert_dir_exists "test-project/specs"
+    assert_dir_exists "test-project/.ralph/specs"
 }
 
 @test "setup.sh handles missing specs directory gracefully" {
@@ -198,7 +197,7 @@ teardown() {
 
     # Should not fail due to || true in script
     assert_success
-    assert_dir_exists "test-project/specs"
+    assert_dir_exists "test-project/.ralph/specs"
 }
 
 # =============================================================================
@@ -301,19 +300,17 @@ teardown() {
 @test "setup.sh custom project has all subdirectories" {
     bash "$SETUP_SCRIPT" my-custom-app
 
-    assert_dir_exists "my-custom-app/specs/stdlib"
-    assert_dir_exists "my-custom-app/src"
-    assert_dir_exists "my-custom-app/examples"
-    assert_dir_exists "my-custom-app/logs"
-    assert_dir_exists "my-custom-app/docs/generated"
+    assert_dir_exists "my-custom-app/.ralph/specs/stdlib"
+    assert_dir_exists "my-custom-app/.ralph/logs"
+    assert_dir_exists "my-custom-app/.ralph/docs/generated"
 }
 
 @test "setup.sh custom project has all template files" {
     bash "$SETUP_SCRIPT" my-custom-app
 
-    assert_file_exists "my-custom-app/PROMPT.md"
-    assert_file_exists "my-custom-app/@fix_plan.md"
-    assert_file_exists "my-custom-app/@AGENT.md"
+    assert_file_exists "my-custom-app/.ralph/PROMPT.md"
+    assert_file_exists "my-custom-app/.ralph/@fix_plan.md"
+    assert_file_exists "my-custom-app/.ralph/@AGENT.md"
 }
 
 # =============================================================================
@@ -338,16 +335,14 @@ teardown() {
     bash "$SETUP_SCRIPT"
 
     # Verify all directories
-    assert_dir_exists "my-project/specs/stdlib"
-    assert_dir_exists "my-project/src"
-    assert_dir_exists "my-project/examples"
-    assert_dir_exists "my-project/logs"
-    assert_dir_exists "my-project/docs/generated"
+    assert_dir_exists "my-project/.ralph/specs/stdlib"
+    assert_dir_exists "my-project/.ralph/logs"
+    assert_dir_exists "my-project/.ralph/docs/generated"
 
     # Verify all files
-    assert_file_exists "my-project/PROMPT.md"
-    assert_file_exists "my-project/@fix_plan.md"
-    assert_file_exists "my-project/@AGENT.md"
+    assert_file_exists "my-project/.ralph/PROMPT.md"
+    assert_file_exists "my-project/.ralph/@fix_plan.md"
+    assert_file_exists "my-project/.ralph/@AGENT.md"
     assert_file_exists "my-project/README.md"
 }
 
@@ -410,7 +405,7 @@ teardown() {
 
     assert_success
     [[ "$output" == *"Next steps:"* ]]
-    [[ "$output" == *"PROMPT.md"* ]]
+    [[ "$output" == *".ralph/PROMPT.md"* ]]
 }
 
 # =============================================================================

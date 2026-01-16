@@ -143,13 +143,13 @@ bats tests/unit/test_cli_modern.bats
 
 ## Ralph Loop Configuration
 
-The loop is controlled by several key files and environment variables:
+The loop is controlled by several key files and environment variables (all in `.ralph/` directory):
 
-- **PROMPT.md** - Main prompt file that drives each loop iteration
-- **@fix_plan.md** - Prioritized task list that Ralph follows
-- **@AGENT.md** - Build and run instructions maintained by Ralph
-- **status.json** - Real-time status tracking (JSON format)
-- **logs/** - Execution logs for each loop iteration
+- **.ralph/PROMPT.md** - Main prompt file that drives each loop iteration
+- **.ralph/@fix_plan.md** - Prioritized task list that Ralph follows
+- **.ralph/@AGENT.md** - Build and run instructions maintained by Ralph
+- **.ralph/status.json** - Real-time status tracking (JSON format)
+- **.ralph/logs/** - Execution logs for each loop iteration
 
 ### Rate Limiting
 - Default: 100 API calls per hour (configurable via `--calls` flag)
@@ -176,7 +176,7 @@ CLAUDE_MIN_VERSION="2.0.76"           # Minimum Claude CLI version
 **Loop Context:**
 Each loop iteration injects context via `build_loop_context()`:
 - Current loop number
-- Remaining tasks from @fix_plan.md
+- Remaining tasks from .ralph/@fix_plan.md
 - Circuit breaker state (if not CLOSED)
 - Previous loop work summary
 
@@ -197,7 +197,7 @@ The `EXIT_SIGNAL` value is read from `.response_analysis` (at `.analysis.exit_si
 **Other exit conditions (checked before completion indicators):**
 - Multiple consecutive "done" signals from Claude Code (`done_signals >= 2`)
 - Too many test-only loops indicating feature completeness (`test_loops >= 3`)
-- All items in @fix_plan.md marked as completed
+- All items in .ralph/@fix_plan.md marked as completed
 
 **Example behavior when EXIT_SIGNAL is false:**
 ```
@@ -237,17 +237,22 @@ Bash code coverage measurement with kcov has fundamental limitations when tracin
 
 ## Project Structure for Ralph-Managed Projects
 
-Each project created with `./setup.sh` follows this structure:
+Each project created with `./setup.sh` or `ralph-init` follows this structure, with all Ralph files in `.ralph/`:
 ```
 project-name/
-├── PROMPT.md          # Main development instructions
-├── @fix_plan.md       # Prioritized TODO list
-├── @AGENT.md          # Build/run instructions
-├── specs/             # Project specifications
-├── src/               # Source code
-├── examples/          # Usage examples
-├── logs/              # Loop execution logs
-└── docs/generated/    # Auto-generated documentation
+├── .ralph/                # All Ralph-specific files
+│   ├── PROMPT.md          # Main development instructions
+│   ├── @fix_plan.md       # Prioritized TODO list
+│   ├── @AGENT.md          # Build/run instructions
+│   ├── specs/             # Project specifications
+│   ├── logs/              # Loop execution logs
+│   ├── docs/generated/    # Auto-generated documentation
+│   ├── .call_count        # API call tracking
+│   ├── .exit_signals      # Exit signal history
+│   └── status.json        # Real-time status
+├── src/                   # Your source code (untouched)
+├── tests/                 # Your tests (untouched)
+└── ...                    # Your existing project files
 ```
 
 ## Template System
@@ -259,10 +264,10 @@ Templates in `templates/` provide starting points for new projects:
 
 ## File Naming Conventions
 
-- Files prefixed with `@` (e.g., `@fix_plan.md`) are Ralph-specific control files
-- Hidden files (e.g., `.call_count`, `.exit_signals`) track loop state
-- `logs/` contains timestamped execution logs
-- `docs/generated/` for Ralph-created documentation
+- Files prefixed with `@` (e.g., `.ralph/@fix_plan.md`) are Ralph-specific control files
+- Hidden files (e.g., `.ralph/.call_count`, `.ralph/.exit_signals`) track loop state
+- `.ralph/logs/` contains timestamped execution logs
+- `.ralph/docs/generated/` for Ralph-created documentation
 - `docs/code-review/` for code review reports
 
 ## Global Installation
@@ -298,7 +303,7 @@ Ralph uses multiple mechanisms to detect when to exit:
 - `MAX_CONSECUTIVE_TEST_LOOPS=3` - Exit if too many test-only iterations
 - `MAX_CONSECUTIVE_DONE_SIGNALS=2` - Exit on repeated completion signals
 - `TEST_PERCENTAGE_THRESHOLD=30%` - Flag if testing dominates recent loops
-- Completion detection via @fix_plan.md checklist items
+- Completion detection via .ralph/@fix_plan.md checklist items
 
 ### Completion Indicators with EXIT_SIGNAL Gate
 
@@ -581,9 +586,9 @@ Before moving to the next feature, ALL changes must be:
    - Create pull requests for all significant changes
 
 4. **Ralph Integration**:
-   - Update @fix_plan.md with new tasks before starting work
-   - Mark items complete in @fix_plan.md upon completion
-   - Update PROMPT.md if Ralph's behavior needs modification
+   - Update .ralph/@fix_plan.md with new tasks before starting work
+   - Mark items complete in .ralph/@fix_plan.md upon completion
+   - Update .ralph/PROMPT.md if Ralph's behavior needs modification
    - Test Ralph loop with new features before completion
 
 ### Documentation Requirements
@@ -609,7 +614,7 @@ Before moving to the next feature, ALL changes must be:
 
 4. **Template Maintenance**:
    - Update template files when new patterns are introduced
-   - Keep PROMPT.md template current with best practices
+   - Keep .ralph/PROMPT.md template current with best practices
    - Update @AGENT.md template with new build patterns
    - Document new Ralph configuration options
 
@@ -628,7 +633,7 @@ Before marking ANY feature as complete, verify:
 - [ ] All changes committed with conventional commit messages
 - [ ] All commits pushed to remote repository
 - [ ] CI/CD pipeline passes
-- [ ] @fix_plan.md task marked as complete
+- [ ] .ralph/@fix_plan.md task marked as complete
 - [ ] Implementation documentation updated
 - [ ] Inline code comments updated or added
 - [ ] CLAUDE.md updated (if new patterns introduced)
@@ -641,7 +646,7 @@ Before marking ANY feature as complete, verify:
 
 These standards ensure:
 - **Quality**: Thorough testing prevents regressions in Ralph's autonomous behavior
-- **Traceability**: Git commits and @fix_plan.md provide clear history of changes
+- **Traceability**: Git commits and .ralph/@fix_plan.md provide clear history of changes
 - **Maintainability**: Current documentation reduces onboarding time and prevents knowledge loss
 - **Collaboration**: Pushed changes enable team visibility and code review
 - **Reliability**: Consistent quality gates maintain Ralph loop stability

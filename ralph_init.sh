@@ -1,11 +1,12 @@
 #!/bin/bash
 
 # Ralph Init - Initialize Ralph in an existing project directory
-# Version: 1.0.0 - In-place initialization for existing projects
+# Version: 1.1.0 - In-place initialization for existing projects (uses .ralph directory)
 set -e
 
 # Configuration
 RALPH_HOME="${RALPH_HOME:-$HOME/.ralph}"
+RALPH_PROJECT_DIR=".ralph"  # All Ralph files go in this subdirectory
 
 # CLI flags
 FORCE=false
@@ -71,20 +72,21 @@ Examples:
     ralph-init --dry-run
 
 Differences from ralph-setup:
-    - ralph-setup: Creates a NEW subdirectory with Ralph structure
+    - ralph-setup: Creates a NEW project subdirectory with Ralph structure
     - ralph-init:  Initializes Ralph IN the current directory (existing project)
 
-Created Files:
-    PROMPT.md           Ralph development instructions
-    @fix_plan.md        Prioritized task list
-    @AGENT.md           Build and run instructions
+Created Structure (all in .ralph/ subdirectory):
+    .ralph/
+    ├── PROMPT.md           Ralph development instructions
+    ├── @fix_plan.md        Prioritized task list
+    ├── @AGENT.md           Build and run instructions
+    ├── specs/              Project specifications
+    │   └── stdlib/
+    ├── logs/               Ralph execution logs
+    └── docs/
+        └── generated/      Auto-generated documentation
 
-Created Directories:
-    specs/stdlib/       Project specifications
-    src/                Source code (if not exists)
-    examples/           Usage examples
-    logs/               Ralph execution logs
-    docs/generated/     Auto-generated documentation
+Your project files remain untouched at the project root.
 
 HELPEOF
 }
@@ -208,41 +210,40 @@ init_git() {
 
 # Create Ralph directory structure
 create_directories() {
-    log "INFO" "Creating Ralph directory structure..."
+    log "INFO" "Creating Ralph directory structure in $RALPH_PROJECT_DIR/..."
     
-    # Core directories
-    create_directory "specs/stdlib"
-    create_directory "src"
-    create_directory "examples"
-    create_directory "logs"
-    create_directory "docs/generated"
+    # Create .ralph directory and subdirectories
+    create_directory "$RALPH_PROJECT_DIR"
+    create_directory "$RALPH_PROJECT_DIR/specs/stdlib"
+    create_directory "$RALPH_PROJECT_DIR/logs"
+    create_directory "$RALPH_PROJECT_DIR/docs/generated"
 }
 
 # Copy Ralph template files
 copy_templates() {
-    log "INFO" "Copying Ralph template files..."
+    log "INFO" "Copying Ralph template files to $RALPH_PROJECT_DIR/..."
     
-    # Core Ralph files
-    copy_template "PROMPT.md" "PROMPT.md"
-    copy_template "fix_plan.md" "@fix_plan.md"
-    copy_template "AGENT.md" "@AGENT.md"
+    # Core Ralph files (into .ralph directory)
+    copy_template "PROMPT.md" "$RALPH_PROJECT_DIR/PROMPT.md"
+    copy_template "fix_plan.md" "$RALPH_PROJECT_DIR/@fix_plan.md"
+    copy_template "AGENT.md" "$RALPH_PROJECT_DIR/@AGENT.md"
     
     # Copy specs templates if they exist and specs dir is empty
     if [[ -d "$RALPH_HOME/templates/specs" ]]; then
         local specs_empty=true
-        if [[ -d "specs" ]] && [[ -n "$(ls -A specs 2>/dev/null)" ]]; then
+        if [[ -d "$RALPH_PROJECT_DIR/specs" ]] && [[ -n "$(ls -A "$RALPH_PROJECT_DIR/specs" 2>/dev/null)" ]]; then
             specs_empty=false
         fi
         
         if [[ "$specs_empty" == "true" || "$FORCE" == "true" ]]; then
             if [[ "$DRY_RUN" == "true" ]]; then
-                log "DRY_RUN" "Would copy specs templates to specs/"
+                log "DRY_RUN" "Would copy specs templates to $RALPH_PROJECT_DIR/specs/"
             else
-                cp -r "$RALPH_HOME/templates/specs/"* specs/ 2>/dev/null || true
+                cp -r "$RALPH_HOME/templates/specs/"* "$RALPH_PROJECT_DIR/specs/" 2>/dev/null || true
                 log "INFO" "Copied specs templates"
             fi
         else
-            log "INFO" "specs/ directory not empty, skipping template copy"
+            log "INFO" "$RALPH_PROJECT_DIR/specs/ directory not empty, skipping template copy"
         fi
     fi
 }
@@ -309,15 +310,15 @@ Analyze the provided specification file and extract:
 
 ## Required Outputs
 
-Update or create these files in the current directory:
+Update or create these files in the .ralph/ directory:
 
-### 1. PROMPT.md
+### 1. .ralph/PROMPT.md
 Transform the PRD into Ralph development instructions with project-specific context.
 
-### 2. @fix_plan.md
+### 2. .ralph/@fix_plan.md
 Convert requirements into a prioritized task list with clear, implementable tasks.
 
-### 3. specs/requirements.md
+### 3. .ralph/specs/requirements.md
 Create detailed technical specifications preserving all technical details from the original PRD.
 
 ## Instructions
@@ -359,15 +360,16 @@ show_summary() {
         echo "To apply these changes, run without --dry-run:"
         echo "  ralph-init"
     else
-        log "SUCCESS" "🎉 Ralph initialized in current directory!"
+        log "SUCCESS" "🎉 Ralph initialized in $RALPH_PROJECT_DIR/!"
         echo ""
         echo "Next steps:"
-        echo "  1. Edit PROMPT.md with your project requirements"
-        echo "  2. Update @fix_plan.md with your task priorities"
-        echo "  3. Add specifications to specs/"
+        echo "  1. Edit $RALPH_PROJECT_DIR/PROMPT.md with your project requirements"
+        echo "  2. Update $RALPH_PROJECT_DIR/@fix_plan.md with your task priorities"
+        echo "  3. Add specifications to $RALPH_PROJECT_DIR/specs/"
         echo "  4. Run: ralph --monitor"
         echo ""
         echo "Project initialized in: $(pwd)"
+        echo "Ralph files in: $(pwd)/$RALPH_PROJECT_DIR/"
     fi
 }
 

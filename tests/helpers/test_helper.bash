@@ -43,18 +43,19 @@ setup() {
     export TEST_TEMP_DIR="$(mktemp -d "${BATS_TEST_TMPDIR}/test.XXXXXX")"
     cd "$TEST_TEMP_DIR"
 
-    # Set up test environment variables
-    export PROMPT_FILE="PROMPT.md"
-    export LOG_DIR="logs"
-    export DOCS_DIR="docs/generated"
-    export STATUS_FILE="status.json"
-    export PROGRESS_FILE="progress.json"
-    export CALL_COUNT_FILE=".call_count"
-    export TIMESTAMP_FILE=".last_reset"
-    export EXIT_SIGNALS_FILE=".exit_signals"
+    # Set up test environment variables (all in .ralph directory)
+    export RALPH_PROJECT_DIR=".ralph"
+    export PROMPT_FILE="$RALPH_PROJECT_DIR/PROMPT.md"
+    export LOG_DIR="$RALPH_PROJECT_DIR/logs"
+    export DOCS_DIR="$RALPH_PROJECT_DIR/docs/generated"
+    export STATUS_FILE="$RALPH_PROJECT_DIR/status.json"
+    export PROGRESS_FILE="$RALPH_PROJECT_DIR/progress.json"
+    export CALL_COUNT_FILE="$RALPH_PROJECT_DIR/.call_count"
+    export TIMESTAMP_FILE="$RALPH_PROJECT_DIR/.last_reset"
+    export EXIT_SIGNALS_FILE="$RALPH_PROJECT_DIR/.exit_signals"
 
     # Create necessary directories
-    mkdir -p "$LOG_DIR" "$DOCS_DIR"
+    mkdir -p "$RALPH_PROJECT_DIR" "$LOG_DIR" "$DOCS_DIR"
 
     # Initialize files
     echo "0" > "$CALL_COUNT_FILE"
@@ -91,18 +92,18 @@ create_mock_fix_plan() {
     local total=${1:-5}
     local completed=${2:-0}
 
-    cat > "@fix_plan.md" << EOF
+    cat > "$RALPH_PROJECT_DIR/@fix_plan.md" << EOF
 # Fix Plan
 
 ## High Priority
 EOF
 
     for ((i=1; i<=completed; i++)); do
-        echo "- [x] Completed task $i" >> "@fix_plan.md"
+        echo "- [x] Completed task $i" >> "$RALPH_PROJECT_DIR/@fix_plan.md"
     done
 
     for ((i=completed+1; i<=total; i++)); do
-        echo "- [ ] Pending task $i" >> "@fix_plan.md"
+        echo "- [ ] Pending task $i" >> "$RALPH_PROJECT_DIR/@fix_plan.md"
     done
 }
 
