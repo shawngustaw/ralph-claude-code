@@ -28,6 +28,7 @@ TIMESTAMP_FILE="$RALPH_PROJECT_DIR/.last_reset"
 CLAUDE_CODE_CMD="claude"
 MAX_CALLS_PER_HOUR=100  # Adjust based on your plan
 VERBOSE_PROGRESS=false  # Default: no verbose progress updates
+CLAUDE_LIVE_OUTPUT=false  # Default: no live streaming to console
 CLAUDE_TIMEOUT_MINUTES=15  # Default: 15 minutes timeout for Claude Code execution
 SLEEP_DURATION=3600     # 1 hour in seconds
 USE_TMUX=false
@@ -825,6 +826,15 @@ build_claude_command() {
 }
 
 # Main execution function
+stop_live_tail() {
+    local tail_pid=$1
+
+    if [[ -n "$tail_pid" ]]; then
+        kill "$tail_pid" 2>/dev/null || true
+        wait "$tail_pid" 2>/dev/null || true
+    fi
+}
+
 execute_claude_code() {
     local timestamp=$(date '+%Y-%m-%d_%H-%M-%S')
     local output_file="$LOG_DIR/claude_output_${timestamp}.log"
@@ -868,6 +878,14 @@ execute_claude_code() {
         log_status "INFO" "Using legacy CLI mode (text output)"
     fi
 
+    # Set up live output streaming if enabled
+    local live_tail_pid=""
+    if [[ "$CLAUDE_LIVE_OUTPUT" == "true" ]]; then
+        : > "$output_file"
+        tail -n 0 -f "$output_file" &
+        live_tail_pid=$!
+    fi
+
     # Execute Claude Code
     if [[ "$use_modern_cli" == "true" ]]; then
         # Modern execution with command array (shell-injection safe)
@@ -877,6 +895,7 @@ execute_claude_code() {
             :  # Continue to wait loop
         else
             log_status "ERROR" "❌ Failed to start Claude Code process (modern mode)"
+            stop_live_tail "$live_tail_pid"
             # Fall back to legacy mode
             log_status "INFO" "Falling back to legacy mode..."
             use_modern_cli=false
@@ -890,6 +909,7 @@ execute_claude_code() {
             :  # Continue to wait loop
         else
             log_status "ERROR" "❌ Failed to start Claude Code process"
+            stop_live_tail "$live_tail_pid"
             return 1
         fi
     fi
@@ -940,6 +960,7 @@ EOF
     # Wait for the process to finish and get exit code
     wait $claude_pid
     local exit_code=$?
+    stop_live_tail "$live_tail_pid"
 
     if [ $exit_code -eq 0 ]; then
         # Only increment counter on successful execution
@@ -1193,6 +1214,7 @@ Options:
     -s, --status            Show current status and exit
     -m, --monitor           Start with tmux session and live monitor (requires tmux)
     -v, --verbose           Show detailed progress updates during execution
+    --live-output           Stream Claude output to console while running
     -t, --timeout MIN       Set Claude Code execution timeout in minutes (default: $CLAUDE_TIMEOUT_MINUTES)
     --reset-circuit         Reset circuit breaker to CLOSED state
     --circuit-status        Show circuit breaker status and exit
@@ -1265,6 +1287,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -v|--verbose)
             VERBOSE_PROGRESS=true
+            shift
+            ;;
+        --live-output)
+            CLAUDE_LIVE_OUTPUT=true
             shift
             ;;
         -t|--timeout)

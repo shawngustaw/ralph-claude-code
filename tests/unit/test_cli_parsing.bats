@@ -81,6 +81,7 @@ teardown() {
     [[ "$output" == *"--status"* ]]
     [[ "$output" == *"--monitor"* ]]
     [[ "$output" == *"--verbose"* ]]
+    [[ "$output" == *"--live-output"* ]]
     [[ "$output" == *"--timeout"* ]]
     [[ "$output" == *"--reset-circuit"* ]]
     [[ "$output" == *"--circuit-status"* ]]
@@ -134,6 +135,13 @@ teardown() {
 
 @test "--verbose flag is accepted without error" {
     run bash "$RALPH_SCRIPT" --verbose --help
+
+    assert_success
+    [[ "$output" == *"Usage:"* ]]
+}
+
+@test "--live-output flag is accepted without error" {
+    run bash "$RALPH_SCRIPT" --live-output --help
 
     assert_success
     [[ "$output" == *"Usage:"* ]]

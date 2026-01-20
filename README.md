@@ -692,6 +692,7 @@ ralph [OPTIONS]
   -s, --status            Show current status and exit
   -m, --monitor           Start with tmux session and live monitor
   -v, --verbose           Show detailed progress updates during execution
+  --live-output           Stream Claude output to console while running
   -t, --timeout MIN       Set Claude Code execution timeout in minutes (1-120, default: 15)
   --output-format FORMAT  Set output format: json (default) or text
   --allowed-tools TOOLS   Set allowed Claude tools (default: Write,Bash(git *),Read)
@@ -718,6 +719,7 @@ ralph-import --in-place prd.md    # Convert PRD in current directory
 ralph --monitor              # Start with integrated monitoring
 ralph --status               # Check current loop status
 ralph --verbose              # Enable detailed progress updates
+ralph --live-output          # Stream Claude output to console while running
 ralph --timeout 30           # Set 30-minute execution timeout
 ralph --calls 50             # Limit to 50 API calls per hour
 ralph --reset-session        # Reset session state manually
